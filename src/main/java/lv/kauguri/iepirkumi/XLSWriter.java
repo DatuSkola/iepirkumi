@@ -1,8 +1,6 @@
 package lv.kauguri.iepirkumi;
 
 import org.apache.poi.ss.SpreadsheetVersion;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -11,39 +9,45 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+
+import static lv.kauguri.iepirkumi.VisitFile.WINNERS_ID;
 
 
 class XLSWriter {
 
     static void write(Data data, String xlsFile) {
         XSSFWorkbook workbook = new XSSFWorkbook();
-        XSSFSheet sheet = workbook.createSheet("Datatypes in Java");
-
+        XSSFSheet sheet = workbook.createSheet("Data");
         int rowNum = 0;
 
         XSSFRow row = sheet.createRow(rowNum++);
         int colNum = 0;
-        for (String dataColumn : data.columns) {
+        for (Column dataColumn : data.columns) {
             XSSFCell cell = row.createCell(colNum++);
-            cell.setCellValue(dataColumn);
+            cell.setCellValue(dataColumn.fullName);
         }
 
-        for (Map<String, String> dataRow : data.rows) {
+        for (Map<Column, String> dataRow : data.rows) {
             row = sheet.createRow(rowNum++);
 
             colNum = 0;
-            for (String dataColumn : data.columns) {
+            for (Column dataColumn : data.columns) {
                 XSSFCell cell = row.createCell(colNum++);
                 String value = dataRow.get(dataColumn);
                 try {
-                    value = substringToFit(value);
+                    value = prepareValue(value);
+                    value = getClassifierValue(dataColumn, value);
                     cell.setCellValue(value);
                 } catch (IllegalArgumentException e) {
                     e.printStackTrace();
                 }
             }
         }
+
+        writeWinnersSheet(data, workbook);
 
         try {
             FileOutputStream outputStream = new FileOutputStream(xlsFile);
@@ -56,7 +60,60 @@ class XLSWriter {
         }
     }
 
-    private static String substringToFit(String value) {
+    private static String getClassifierValue(Column dataColumn, String value) {
+        if(value != null && value.length() > 0) {
+            if(dataColumn.shortName.endsWith("country")) {
+                String classifierVaule = PreferencesManager.getCountries().getProperty(value);
+                return classifierVaule;
+            } else if(dataColumn.shortName.endsWith("currency")) {
+                String classifierVaule = PreferencesManager.getCurrencies().getProperty(value);
+                return classifierVaule;
+            } else if(dataColumn.shortName.endsWith("language")) {
+                String classifierVaule = PreferencesManager.getLanguages().getProperty(value);
+                return classifierVaule;
+            }
+        }
+        return value;
+    }
+
+    private static void writeWinnersSheet(Data data, XSSFWorkbook workbook) {
+        XSSFSheet sheetWinners = workbook.createSheet("Winners");
+        Set<String> columns = new HashSet<>();
+        for(Winner winner : data.winners) {
+            columns.addAll(winner.attributes.keySet());
+        }
+
+        String[] columnsArray = columns.toArray(new String[]{});
+
+        int rowNum = 0;
+        XSSFRow row = sheetWinners.createRow(rowNum++);
+
+        int colNum = 0;
+        XSSFCell cell = row.createCell(colNum++);
+        cell.setCellValue(WINNERS_ID);
+
+        for (String dataColumn : columnsArray) {
+            cell = row.createCell(colNum++);
+            cell.setCellValue(dataColumn);
+        }
+
+        for(Winner winner : data.winners) {
+            row = sheetWinners.createRow(rowNum++);
+            colNum = 0;
+            cell = row.createCell(colNum++);
+            cell.setCellValue(winner.id);
+
+            for (String column : columnsArray) {
+                cell = row.createCell(colNum++);
+                String value = winner.attributes.get(column);
+                value = prepareValue(value);
+                cell.setCellValue(value);
+            }
+
+        }
+    }
+
+    private static String prepareValue(String value) {
         if(value == null) {
             return null;
         }
@@ -75,8 +132,9 @@ class XLSWriter {
             value = value.replace("&gt;", ">");
             value = value.replace("&ldquo;", "“");
             value = value.replace("&rdquo;", "”");
-
         }
         return value;
     }
+
+
 }

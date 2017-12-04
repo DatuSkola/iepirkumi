@@ -10,7 +10,7 @@ import static lv.kauguri.iepirkumi.FileOperations.createIfNeeded;
 public class Iepirkumi {
 
     static String SEP = File.separator;
-    static String WORK_DIR = "ftp_files" + SEP;
+    static String WORK_DIR = SEP + "data" + SEP + "iepirkumi" + SEP;
     static String ARCHIVES_DIR = WORK_DIR + "arch" + SEP;
     static String XML_DIR = WORK_DIR + "xmls" + SEP;
     static String TMP_DIR = WORK_DIR + "tmp" + SEP;
@@ -18,7 +18,7 @@ public class Iepirkumi {
 
     public static void main(String[] args) throws IOException, InterruptedException {
 //        FileOperations.rmrf();
-//        DateRange dateRange = new DateRange(2017, 01);
+//        DateRange dateRange = new DateRange(2017, 8);
 //        DownloaderFTP.download(dateRange);
         extractAll(false);
     }
@@ -49,7 +49,6 @@ public class Iepirkumi {
                             e.printStackTrace();
                         }
                     }
-
                 }
 
                 Data data = LoadXMLData.loadXmls(xmlMonthDir);

@@ -19,15 +19,15 @@ class CSVWriter {
 
     private static void write(BufferedWriter bufferedWriter, Data data) throws IOException {
         String prefix = "";
-        for (String column : data.columns) {
+        for (Column column : data.columns) {
             bufferedWriter.write(prefix + column);
             prefix = ", ";
         }
         bufferedWriter.write("\n");
 
-        for (Map<String, String> row : data.rows) {
+        for (Map<Column, String> row : data.rows) {
             prefix = "";
-            for (String column : data.columns) {
+            for (Column column : data.columns) {
                 String value = row.get(column);
                 bufferedWriter.write(prefix);
                 if (value != null) {
