@@ -3,8 +3,10 @@ package lv.kauguri.iepirkumi;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static lv.kauguri.iepirkumi.Iepirkumi.SEP;
 import static lv.kauguri.iepirkumi.Iepirkumi.WORK_DIR;
 
 class FileOperations {
@@ -58,12 +60,30 @@ class FileOperations {
         return null;
     }
 
-    static void writeFile(String path, String contents) {
+    static void writeFile(Path path, String contents) {
         try {
-            Files.write(Paths.get(path), contents.getBytes());
+            Files.write(path, contents.getBytes());
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
+
+    static void visitEachSubSubDirectory(String dir, MyConsumer<String, String> myConsumer) {
+        File xmlDir = new File(dir);
+        for(File yearDir : xmlDir.listFiles()) {
+            for (File monthDir : yearDir.listFiles()) {
+                try {
+                    myConsumer.accept(yearDir.getName(), monthDir.getName());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    static String getDir(String dir, String year, String month) {
+        return dir + SEP + year + SEP + month;
+    }
+
+
 }

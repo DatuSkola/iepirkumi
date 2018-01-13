@@ -2,10 +2,15 @@ package lv.kauguri.iepirkumi;
 
 import org.codehaus.plexus.archiver.ArchiverException;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
+import static javax.script.ScriptEngine.FILENAME;
 import static lv.kauguri.iepirkumi.FileOperations.createIfNeeded;
+import static lv.kauguri.iepirkumi.FileOperations.getDir;
+import static lv.kauguri.iepirkumi.FileOperations.visitEachSubSubDirectory;
 
 public class Iepirkumi {
 
@@ -15,16 +20,21 @@ public class Iepirkumi {
     static String XML_DIR = WORK_DIR + "xmls" + SEP;
     static String TMP_DIR = WORK_DIR + "tmp" + SEP;
     static String XLS_DIR = WORK_DIR + "xls" + SEP;
+    static String FIX_BAT = "fix.bat";
 
     public static void main(String[] args) throws IOException, InterruptedException {
 //        FileOperations.rmrf();
-//        DateRange dateRange = new DateRange(2017, 8);
+//        DateRange dateRange = new DateRange(2017, 12);
+
 //        DownloaderFTP.download(dateRange);
-        extractAll(false);
+//        recreateDirectories();
+//        UnArchiver.extract();
+//        LoadXMLData.fixXmlFiles();
+        LoadXMLData.loadXmls();
+
     }
 
-
-    static void extractAll(boolean unarchive) throws IOException {
+    static void recreateDirectories() throws IOException {
         File dir = new File(ARCHIVES_DIR);
 
         createIfNeeded(XML_DIR);
@@ -40,21 +50,9 @@ public class Iepirkumi {
                 File xlsMonthDir = new File(XLS_DIR + SEP + yearDir.getName() + SEP + monthDir.getName());
                 createIfNeeded(xmlMonthDir);
                 createIfNeeded(xlsMonthDir);
-
-                if(unarchive) {
-                    for(File archive : monthDir.listFiles() ) {
-                        try {
-                            UnArchiver.extract(archive, xmlMonthDir);
-                        } catch(ArchiverException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-
-                Data data = LoadXMLData.loadXmls(xmlMonthDir);
-                XLSWriter.write(data, xlsMonthDir + SEP + yearDir.getName() + "_" + monthDir.getName() + ".xlsx");
             }
         }
     }
+
 
 }

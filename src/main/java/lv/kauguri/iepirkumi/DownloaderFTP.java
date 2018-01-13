@@ -63,7 +63,7 @@ class DownloaderFTP {
             String yearDirectory =  ARCHIVES_DIR + year + SEP;
             createIfNeeded(yearDirectory);
 
-            for (int month = dateRange.fromMonth; month <= dateRange.toMonth; month++) {
+            for (int month = dateRange.getFromMonth(year); month <= dateRange.getToMonth(year); month++) {
                 String monthYear = getMonthStr(month) + "_" + year;
                 String ftpDirectory = "/" + year + "/" + monthYear + "/";
                 ftp.changeWorkingDirectory(ftpDirectory);
@@ -95,6 +95,8 @@ class DownloaderFTP {
             if (!file.exists()) {
                 file.createNewFile();
             }
+
+            System.out.println("download and save " + file.getCanonicalPath());
 
             ftp.retrieveFile(file.getName(), fop);
 

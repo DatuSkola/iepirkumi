@@ -20,4 +20,18 @@ class DateRange {
     public static void main(String[] args) {
         new DateRange(2017, 11);
     }
+
+    public int getFromMonth(int year) {
+        if (year == fromYear) {
+            return fromMonth;
+        }
+        return 1;
+    }
+
+    public int getToMonth(int year) {
+        if (year == toYear) {
+            return toMonth;
+        }
+        return 12;
+    }
 }

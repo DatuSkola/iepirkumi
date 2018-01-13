@@ -6,11 +6,22 @@ import org.codehaus.plexus.logging.console.ConsoleLogger;
 
 import java.io.File;
 
+import static lv.kauguri.iepirkumi.FileOperations.visitEachSubSubDirectory;
 import static lv.kauguri.iepirkumi.Iepirkumi.*;
 
 class UnArchiver {
 
-    static void extract(File archiveFile, File destinationDirectory) {
+    static void extract() {
+        visitEachSubSubDirectory(ARCHIVES_DIR, (year, month) -> {
+            File archiveDir = new File(ARCHIVES_DIR + SEP + year + SEP + month);
+            File xmlDir = new File(XML_DIR + SEP + year + SEP + month);
+            for(File achiveFile : archiveDir.listFiles()) {
+                extractFile(achiveFile, xmlDir);
+            }
+        });
+    }
+
+    private static void extractFile(File archiveFile, File destinationDirectory) {
         final GZipUnArchiver gZipUnArchiver = new GZipUnArchiver();
 
         File tarFile = new File(TMP_DIR + archiveFile.getName().replace(".gz", ""));

@@ -11,9 +11,11 @@ public class PreferencesManager {
     private static String COUNTRIES_FILE = "classifiers/countries";
     private static String CURRENCIES_FILE = "classifiers/currency";
     private static String LANGUAGES_FILE = "classifiers/languages";
+    private static String TYPES_FILE = "classifiers/types";
     private static Properties countries;
     private static Properties currencies;
     private static Properties languages;
+    private static Properties types;
 
     public static void main(String[] args) throws IOException {
 
@@ -50,6 +52,13 @@ public class PreferencesManager {
             languages = read(LANGUAGES_FILE);
         }
         return languages;
+    }
+
+    static Properties getTypes() {
+        if(types == null) {
+            types = read(TYPES_FILE);
+        }
+        return types;
     }
 
 

@@ -45,7 +45,12 @@ public class VisitFile {
 
         if(nodeName.endsWith("list")) {
             String value = toString(node).trim();
-            values.put(new Column(parentName + nodeName, nodeName), value);
+
+            if(parentName != null && !parentName.isEmpty()) {
+                parentName += ".";
+            }
+
+            values.put(Column.createColumn(parentName + nodeName, nodeName), value);
             return;
         }
 
@@ -82,7 +87,7 @@ public class VisitFile {
                 visitNode(childNode, name);
             }
         } else {
-            values.put(new Column(parentName + nodeName, nodeName), node.getTextContent());
+            values.put(Column.createColumn(parentName + nodeName, nodeName), node.getTextContent());
         }
     }
 
@@ -94,7 +99,7 @@ public class VisitFile {
         for(Winner winner : winnersTmp) {
             winnersIds += winner.id + ",";
         }
-        values.put(new Column(WINNERS_ID, WINNERS_ID), winnersIds);
+        values.put(Column.createColumn(WINNERS_ID, WINNERS_ID), winnersIds);
     }
 
     private List<Winner> processWinnerList2(Node node) {
