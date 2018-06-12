@@ -1,10 +1,12 @@
-package lv.kauguri.iepirkumi;
+package lv.kauguri.iepirkumi.files;
+
+import lv.kauguri.iepirkumi.data.Column;
+import lv.kauguri.iepirkumi.data.Data;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Map;
 
 class CSVWriter {

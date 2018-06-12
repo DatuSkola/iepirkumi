@@ -1,34 +1,38 @@
 package lv.kauguri.iepirkumi;
 
+import lv.kauguri.iepirkumi.data.Column;
+import lv.kauguri.iepirkumi.data.Data;
+import lv.kauguri.iepirkumi.data.Winner;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.util.*;
 
-public class VisitFile {
-    static String WINNERS_ID = "exported_winner_id";
+import static lv.kauguri.iepirkumi.data.Const.WINNERS_ID;
+
+public class DocToData {
     Map<Column, String> values;
     List<Winner> winners;
-    Document doc;
-    Data data;
+    Document sourceDocument;
+    Data resultData;
 
-    public VisitFile(Document doc, Data data) {
-        this.doc = doc;
-        this.data = data;
+    public DocToData(Document sourceDocument, Data resultData) {
+        this.sourceDocument = sourceDocument;
+        this.resultData = resultData;
         this.values = new HashMap<>();
         this.winners = new ArrayList<>();
     }
 
     void visitFiles() {
-        NodeList nodeList = doc.getChildNodes().item(0).getChildNodes();
+        NodeList nodeList = sourceDocument.getChildNodes().item(0).getChildNodes();
         for (int i = 0; i < nodeList.getLength(); i++) {
             Node node = nodeList.item(i);
             visitNode(node, "");
         }
 
-        data.addRow(values);
-        data.addWinners(winners);
+        resultData.addRow(values);
+        resultData.addWinners(winners);
     }
 
     private void visitNode(Node node, String parentName) {

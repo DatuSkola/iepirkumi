@@ -1,7 +1,8 @@
-package lv.kauguri.iepirkumi;
+package lv.kauguri.iepirkumi.files;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -9,25 +10,25 @@ import java.nio.file.Paths;
 import static lv.kauguri.iepirkumi.Iepirkumi.SEP;
 import static lv.kauguri.iepirkumi.Iepirkumi.WORK_DIR;
 
-class FileOperations {
+public class FileOperations {
 
-    static void rmrf() throws IOException, InterruptedException {
+    public static void rmrf() throws IOException, InterruptedException {
         Runtime rt = Runtime.getRuntime();
         Process pr = rt.exec("rm -rf " + WORK_DIR);
         pr.waitFor();
     }
 
-    static void createIfNeeded(String dirPath) throws IOException {
+    public static void createIfNeeded(String dirPath) throws IOException {
         createIfNeeded(new File(dirPath));
     }
 
-    static void createIfNeeded(File dir) throws IOException {
+    public static void createIfNeeded(File dir) throws IOException {
         if(!dir.exists()) {
             dir.mkdir();
         }
     }
 
-    static void forceDelete(File file) {
+    public static void forceDelete(File file) {
         if(file.isDirectory()) {
             for(File child : file.listFiles()) {
                 forceDelete(child);
@@ -39,7 +40,7 @@ class FileOperations {
         }
     }
 
-    static String readFile(File file) {
+    public static String readFile(File file) {
         try {
             String content = readFile(file.getCanonicalPath());
             return content;
@@ -50,7 +51,7 @@ class FileOperations {
     }
 
 
-    static String readFile(String path) {
+    public static String readFile(String path) {
         try {
             String content = new String(Files.readAllBytes(Paths.get(path)));
             return content;
@@ -60,7 +61,7 @@ class FileOperations {
         return null;
     }
 
-    static void writeFile(Path path, String contents) {
+    public static void writeFile(Path path, String contents) {
         try {
             Files.write(path, contents.getBytes());
         } catch (IOException e) {
@@ -68,7 +69,7 @@ class FileOperations {
         }
     }
 
-    static void visitEachSubSubDirectory(String dir, MyConsumer<String, String> myConsumer) {
+    public static void visitEachSubSubDirectory(String dir, MyConsumer<String, String> myConsumer) {
         File xmlDir = new File(dir);
         for(File yearDir : xmlDir.listFiles()) {
             for (File monthDir : yearDir.listFiles()) {
@@ -81,8 +82,23 @@ class FileOperations {
         }
     }
 
-    static String getDir(String dir, String year, String month) {
+    public static String getDir(String dir, String year, String month) {
         return dir + SEP + year + SEP + month;
+    }
+
+    public static void run(String command) {
+        Runtime runtime = Runtime.getRuntime();
+        try {
+            Process process = runtime.exec(command);
+            InputStream is = process.getInputStream();
+            int i = 0;
+            while( (i = is.read() ) != -1) {
+                System.out.print((char)i);
+            }
+            process.waitFor();
+        } catch (InterruptedException | IOException e) {
+            e.printStackTrace();
+        }
     }
 
 

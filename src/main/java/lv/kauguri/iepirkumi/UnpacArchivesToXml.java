@@ -6,10 +6,10 @@ import org.codehaus.plexus.logging.console.ConsoleLogger;
 
 import java.io.File;
 
-import static lv.kauguri.iepirkumi.FileOperations.visitEachSubSubDirectory;
+import static lv.kauguri.iepirkumi.files.FileOperations.visitEachSubSubDirectory;
 import static lv.kauguri.iepirkumi.Iepirkumi.*;
 
-class UnArchiver {
+class UnpacArchivesToXml {
 
     static void extract() {
         visitEachSubSubDirectory(ARCHIVES_DIR, (year, month) -> {

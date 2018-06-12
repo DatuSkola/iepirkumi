@@ -1,5 +1,6 @@
 package lv.kauguri.iepirkumi;
 
+import lv.kauguri.iepirkumi.data.Data;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -10,57 +11,43 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.function.Consumer;
 
-import static lv.kauguri.iepirkumi.FileOperations.getDir;
-import static lv.kauguri.iepirkumi.FileOperations.visitEachSubSubDirectory;
+import static lv.kauguri.iepirkumi.files.FileOperations.getDir;
+import static lv.kauguri.iepirkumi.files.FileOperations.run;
+import static lv.kauguri.iepirkumi.files.FileOperations.visitEachSubSubDirectory;
 import static lv.kauguri.iepirkumi.Iepirkumi.*;
 
-class LoadXMLData {
+class XMLtoDoc {
 
-    static void fixXmlFiles() throws IOException {
+    static void fixXmlFiles() {
         visitEachSubSubDirectory(XML_DIR, (year, month) -> {
             run(FIX_BAT +  " "+ getDir(XML_DIR, year, month));
         });
     }
 
-    static void loadXmls() throws IOException {
+    static void loadXmls(Consumer<Data> consumer) {
         visitEachSubSubDirectory(XML_DIR, (year, month) -> {
             File xmlDir = new File(getDir(XML_DIR, year, month));
-            Data data = new Data();
+            Data data = new Data(year, month);
 
             for (File xmlFile : xmlDir.listFiles()) {
                 Document doc = readXml(xmlFile);
                 if(doc == null) {
                     continue;
                 }
-                (new VisitFile(doc, data)).visitFiles();
+                (new DocToData(doc, data)).visitFiles();
             }
             data.build();
 
-            XLSWriter.write(data, XLS_DIR + SEP + year + "_" + month + ".xlsx");
+            consumer.accept(data);
         });
-    }
-
-    static void run(String command) {
-        Runtime runtime = Runtime.getRuntime();
-        try {
-            Process process = runtime.exec(command);
-            InputStream is = process.getInputStream();
-            int i = 0;
-            while( (i = is.read() ) != -1) {
-                System.out.print((char)i);
-            }
-            process.waitFor();
-        } catch (InterruptedException | IOException e) {
-            e.printStackTrace();
-        }
     }
 
     private static Document readXml(File file) {
         InputStream is = null;
         try {
             is = new FileInputStream(file);
-//            is = new ReplacingInputStream(is, "&".getBytes(), "&amp;".getBytes());
 
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = dbf.newDocumentBuilder();

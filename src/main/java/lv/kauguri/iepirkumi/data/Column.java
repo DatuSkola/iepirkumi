@@ -1,11 +1,11 @@
-package lv.kauguri.iepirkumi;
+package lv.kauguri.iepirkumi.data;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class Column {
-    String fullName;
-    String shortName;
+    public String fullName;
+    public String shortName;
 
     private static Map<String, Column> columns = new HashMap<>();
 
@@ -25,6 +25,13 @@ public class Column {
 
     public Column(String fullName) {
         this.fullName = fullName;
+        if(fullName.contains(".")) {
+            String[] nameParts = fullName.split("\\.");
+            int index = nameParts.length - 1;
+            this.shortName = nameParts[index];
+        } else {
+            this.shortName = fullName;
+        }
     }
 
     @Override

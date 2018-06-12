@@ -1,29 +1,32 @@
-package lv.kauguri.iepirkumi;
+package lv.kauguri.iepirkumi.data;
 
 import java.util.*;
 
-import static lv.kauguri.iepirkumi.VisitFile.WINNERS_ID;
+import static lv.kauguri.iepirkumi.data.Const.WINNERS_ID;
 
+public class Data {
+    public Column[] columns;
+    public List<Map<Column, String>> rows;
+    public List<Winner> winners;
+    public String year;
+    public String month;
 
-class Data {
-    Column[] columns;
-    List<Map<Column, String>> rows;
-    List<Winner> winners;
-
-    public Data() {
-        rows = new ArrayList<>();
-        winners = new ArrayList<>();
+    public Data(String year, String month) {
+        this.rows = new ArrayList<>();
+        this.winners = new ArrayList<>();
+        this.year = year;
+        this.month = month;
     }
 
-    void addRow(Map<Column, String> row) {
+    public void addRow(Map<Column, String> row) {
         rows.add(row);
     }
 
-    void addWinners(List<Winner> winners) {
+    public void addWinners(List<Winner> winners) {
         this.winners.addAll(winners);
     }
 
-    void build() {
+    public void build() {
         Set<Column> columns = new HashSet<>();
         for(Map<Column, String> row : rows) {
             columns.addAll(row.keySet());
@@ -41,8 +44,8 @@ class Data {
         });
 
         this.columns = columnArray;
-
     }
+
 
 
 }

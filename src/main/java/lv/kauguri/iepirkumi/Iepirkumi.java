@@ -1,37 +1,40 @@
 package lv.kauguri.iepirkumi;
 
-import org.codehaus.plexus.archiver.ArchiverException;
+import lv.kauguri.iepirkumi.data.Column;
+import lv.kauguri.iepirkumi.data.DateRange;
+import lv.kauguri.iepirkumi.files.FileOperations;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
-import static javax.script.ScriptEngine.FILENAME;
-import static lv.kauguri.iepirkumi.FileOperations.createIfNeeded;
-import static lv.kauguri.iepirkumi.FileOperations.getDir;
-import static lv.kauguri.iepirkumi.FileOperations.visitEachSubSubDirectory;
+import static lv.kauguri.iepirkumi.files.FileOperations.createIfNeeded;
 
 public class Iepirkumi {
 
-    static String SEP = File.separator;
-    static String WORK_DIR = SEP + "data" + SEP + "iepirkumi" + SEP;
-    static String ARCHIVES_DIR = WORK_DIR + "arch" + SEP;
-    static String XML_DIR = WORK_DIR + "xmls" + SEP;
-    static String TMP_DIR = WORK_DIR + "tmp" + SEP;
-    static String XLS_DIR = WORK_DIR + "xls" + SEP;
-    static String FIX_BAT = "fix.bat";
+    public static String SEP = File.separator;
+    public static String WORK_DIR = SEP + "data" + SEP + "iepirkumi" + SEP;
+    public static String ARCHIVES_DIR = WORK_DIR + "arch" + SEP;
+    public static String XML_DIR = WORK_DIR + "xmls" + SEP;
+    public static String TMP_DIR = WORK_DIR + "tmp" + SEP;
+    public static String XLS_DIR = WORK_DIR + "xls" + SEP;
+    public static String FIX_BAT = "fix.bat";
 
-    public static void main(String[] args) throws IOException, InterruptedException {
-//        FileOperations.rmrf();
-//        DateRange dateRange = new DateRange(2017, 12);
+    public static void main(String[] args) {
+//        loadData();
 
-//        DownloaderFTP.download(dateRange);
-//        recreateDirectories();
-//        UnArchiver.extract();
-//        LoadXMLData.fixXmlFiles();
-        LoadXMLData.loadXmls();
+        XMLtoDoc.loadXmls(data -> XLSWriter.write(data, XLS_DIR + SEP + data.year + "_" + data.month + ".xlsx"));
+    }
 
+    static void loadData() throws IOException, InterruptedException {
+        FileOperations.rmrf();
+        DateRange dateRange = new DateRange(2017, 12);
+
+        DownloadArchives.download(dateRange);
+        recreateDirectories();
+        UnpacArchivesToXml.extract();
+        XMLtoDoc.fixXmlFiles();
     }
 
     static void recreateDirectories() throws IOException {

@@ -1,24 +1,20 @@
-package lv.kauguri.iepirkumi;
+package lv.kauguri.iepirkumi.data;
 
 import java.util.Calendar;
 
-class DateRange {
-    int fromYear;
-    int fromMonth;
-    int toYear;
-    int toMonth;
+public class DateRange {
+    public int fromYear;
+    public int fromMonth;
+    public int toYear;
+    public int toMonth;
 
-    DateRange(int fromYear, int fromMonth) {
+    public DateRange(int fromYear, int fromMonth) {
         this.fromYear = fromYear;
         this.fromMonth = fromMonth;
         Calendar calendar = Calendar.getInstance();
 
         this.toYear = calendar.get(Calendar.YEAR);
         this.toMonth = calendar.get(Calendar.MONTH) + 1;
-    }
-
-    public static void main(String[] args) {
-        new DateRange(2017, 11);
     }
 
     public int getFromMonth(int year) {

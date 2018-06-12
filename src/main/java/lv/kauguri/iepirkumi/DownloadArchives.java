@@ -1,5 +1,6 @@
 package lv.kauguri.iepirkumi;
 
+import lv.kauguri.iepirkumi.data.DateRange;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPClientConfig;
 import org.apache.commons.net.ftp.FTPFile;
@@ -9,10 +10,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import static lv.kauguri.iepirkumi.FileOperations.createIfNeeded;
+import static lv.kauguri.iepirkumi.files.FileOperations.createIfNeeded;
 import static lv.kauguri.iepirkumi.Iepirkumi.*;
 
-class DownloaderFTP {
+class DownloadArchives {
 
     static void download(DateRange dateRange) {
         FTPClient ftp = new FTPClient();

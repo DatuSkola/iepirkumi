@@ -1,8 +1,14 @@
 package lv.kauguri.iepirkumi;
 
+import lv.kauguri.iepirkumi.data.Column;
+import lv.kauguri.iepirkumi.data.Data;
+import lv.kauguri.iepirkumi.data.Winner;
+import lv.kauguri.iepirkumi.preferences.PreferencesManager;
+import org.apache.poi.common.usermodel.HyperlinkType;
+import org.apache.poi.hssf.usermodel.*;
+import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.SpreadsheetVersion;
-import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
@@ -14,7 +20,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
-import static lv.kauguri.iepirkumi.VisitFile.WINNERS_ID;
+import static lv.kauguri.iepirkumi.data.Const.WINNERS_ID;
 
 class XLSWriter {
 
@@ -22,13 +28,20 @@ class XLSWriter {
             new Column("id"),
             new Column("general.procurement_code"),
             new Column("general.name"),
+            new Column("general.main_cpv.code"),
             new Column("type"),
 
+            new Column("price_exact_eur"),
             new Column("contract_price_exact"),
-            new Column("contract_price_exact"),
+
             new Column("authority_name"),
             new Column("authority_reg_num"),
-            new Column("exported_winner_id")
+
+            new Column("exported_winner_id"),
+            new Column("winners.winner.firm"),
+            new Column("winners.winner.reg_num"),
+
+            new Column("%url")
     );
 
     static void write(Data data, String xlsFile) {
@@ -54,12 +67,27 @@ class XLSWriter {
         sheet.createFreezePane(0, 1);
         int rowNum = 0;
 
+//        for(Column col : data.columns) {
+//            System.out.println(col.fullName);
+//        }
+//        System.exit(0);
+
+        XSSFCreationHelper createHelper = workbook.getCreationHelper();
+
+        //cell style for hyperlinks
+        //by default hyperlinks are blue and underlined
+        XSSFCellStyle hlink_style = workbook.createCellStyle();
+        XSSFFont hlink_font = workbook.createFont();
+        hlink_font.setUnderline(org.apache.poi.ss.usermodel.Font.U_SINGLE);
+        hlink_font.setColor(HSSFColor.HSSFColorPredefined.BLUE.getIndex());
+        hlink_style.setFont(hlink_font);
+
         XSSFRow row = sheet.createRow(rowNum++);
         int colNum = 0;
 
         for (Column column : mainSheetColumns) {
             XSSFCell cell = row.createCell(colNum++);
-            cell.setCellValue(column.fullName);
+            cell.setCellValue(getColumnName(column));
         }
 
         for (Map<Column, String> dataRow : data.rows) {
@@ -68,23 +96,47 @@ class XLSWriter {
             colNum = 0;
             for (Column column : mainSheetColumns) {
                 XSSFCell cell = row.createCell(colNum++);
+
+                if(column.fullName.equals("%url")) {
+                    String value = getValue(dataRow, column);
+                    url(cell, createHelper, hlink_style, value);
+                }
+
                 String value = getValue(dataRow, column);
                 cell.setCellValue(value);
             }
         }
     }
 
+    private static String getColumnName(Column column) {
+
+        String name = PreferencesManager.getColumnNamesLong().getProperty(column.fullName);
+        if(name == null && column.shortName != null) {
+            name = PreferencesManager.getColumnNamesShort().getProperty(column.shortName);
+        }
+        if(name == null) {
+            name = column.fullName;
+        }
+        if(name == null) {
+            if(column.fullName.equals("%url")) {
+                name = "Hipersaite";
+            }
+        }
+        return name;
+    }
+
 
     private static void writeFullDataSheet(Data data, XSSFWorkbook workbook) {
         XSSFSheet sheet = workbook.createSheet("Data");
+        XSSFWorkbook wb = sheet.getWorkbook();
 
-        XSSFCellStyle shadesOfGray = sheet.getWorkbook().createCellStyle();
+        XSSFCellStyle shadesOfGray = wb.createCellStyle();
         XSSFColor color = new XSSFColor(Color.GRAY);
         shadesOfGray.setFillPattern(FillPatternType.SOLID_FOREGROUND);
         shadesOfGray.setFillForegroundColor(color);
         shadesOfGray.setWrapText(true);
 
-        XSSFCellStyle wrap = sheet.getWorkbook().createCellStyle();
+        XSSFCellStyle wrap = wb.createCellStyle();
         wrap.setWrapText(true);
 
         sheet.createFreezePane(0, 2);
@@ -141,7 +193,7 @@ class XLSWriter {
             previousCell = currentCell;
 
             XSSFCell cell = columnRow.createCell(col);
-            cell.setCellValue(dataColumn.shortName);
+            cell.setCellValue(getColumnName(dataColumn));
             if (currentCategory == null) {
                 firstCell.setCellStyle(shadesOfGray);
             }
@@ -163,6 +215,11 @@ class XLSWriter {
             for (Column dataColumn : data.columns) {
                 XSSFCell cell = row.createCell(colNum++);
                 String value = getValue(dataRow, dataColumn);
+
+                if(value != null && value.length() > 200) {
+                    System.out.println(">>>"+dataColumn.fullName);
+                }
+
                 cell.setCellValue(value);
                 if(value != null && value.length() > 30 && !dataColumn.fullName.endsWith("list")) {
                     cell.setCellStyle(wrap);
@@ -172,6 +229,14 @@ class XLSWriter {
         }
     }
 
+    private static void url(XSSFCell cell, XSSFCreationHelper createHelper, XSSFCellStyle hlink_style,
+                                String url) {
+        cell.setCellValue(url);
+        XSSFHyperlink link = createHelper.createHyperlink(HyperlinkType.URL);
+        link.setAddress(url);
+        cell.setHyperlink(link);
+        cell.setCellStyle(hlink_style);
+    }
 
     private static String getColumnCategory(Column column) {
         if (column.fullName == null || !column.fullName.contains(".")) {
@@ -182,7 +247,15 @@ class XLSWriter {
     }
 
     private static String getValue(Map<Column, String> dataRow, Column column) {
-        String value = dataRow.get(column);
+        String value;
+        if(column.fullName.equals("%url")) {
+            String idValue = dataRow.get(new Column("id"));
+            value = "https://pvs.iub.gov.lv/show/" + idValue;
+
+            return value;
+        }
+
+        value = dataRow.get(column);
         try {
             value = prepareValue(value);
             value = getClassifierValue(column.fullName, value);
@@ -207,6 +280,9 @@ class XLSWriter {
             } else if (name.equals("type")) {
                 String classifierVaule = PreferencesManager.getTypes().getProperty(value);
                 return classifierVaule.split(";")[2];
+            } else if (name.endsWith(".code")) {
+                String classifierVaule = PreferencesManager.getCPVCodes().get(value).lv;
+                return classifierVaule;
             }
         }
         return value;
