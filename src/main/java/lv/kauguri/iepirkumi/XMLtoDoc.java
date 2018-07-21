@@ -20,12 +20,6 @@ import static lv.kauguri.iepirkumi.Iepirkumi.*;
 
 class XMLtoDoc {
 
-    static void fixXmlFiles() {
-        visitEachSubSubDirectory(XML_DIR, (year, month) -> {
-            run(FIX_BAT +  " "+ getDir(XML_DIR, year, month));
-        });
-    }
-
     static void loadXmls(Consumer<Data> consumer) {
         visitEachSubSubDirectory(XML_DIR, (year, month) -> {
             File xmlDir = new File(getDir(XML_DIR, year, month));
@@ -44,7 +38,7 @@ class XMLtoDoc {
         });
     }
 
-    private static Document readXml(File file) {
+    public static Document readXml(File file) {
         InputStream is = null;
         try {
             is = new FileInputStream(file);

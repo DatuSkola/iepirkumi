@@ -11,17 +11,7 @@ import static lv.kauguri.iepirkumi.Iepirkumi.*;
 
 class UnpacArchivesToXml {
 
-    static void extract() {
-        visitEachSubSubDirectory(ARCHIVES_DIR, (year, month) -> {
-            File archiveDir = new File(ARCHIVES_DIR + SEP + year + SEP + month);
-            File xmlDir = new File(XML_DIR + SEP + year + SEP + month);
-            for(File achiveFile : archiveDir.listFiles()) {
-                extractFile(achiveFile, xmlDir);
-            }
-        });
-    }
-
-    private static void extractFile(File archiveFile, File destinationDirectory) {
+    public static void extractFile(File archiveFile, File destinationDirectory) {
         final GZipUnArchiver gZipUnArchiver = new GZipUnArchiver();
 
         File tarFile = new File(TMP_DIR + archiveFile.getName().replace(".gz", ""));

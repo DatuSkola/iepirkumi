@@ -1,15 +1,15 @@
 package lv.kauguri.iepirkumi;
 
-import lv.kauguri.iepirkumi.data.Column;
+import lv.kauguri.iepirkumi.data.Data;
 import lv.kauguri.iepirkumi.data.DateRange;
 import lv.kauguri.iepirkumi.files.FileOperations;
+import org.w3c.dom.Document;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 
-import static lv.kauguri.iepirkumi.files.FileOperations.createIfNeeded;
+import static lv.kauguri.iepirkumi.files.FileOperations.*;
+import static lv.kauguri.iepirkumi.files.FileOperations.getDir;
 
 public class Iepirkumi {
 
@@ -21,20 +21,48 @@ public class Iepirkumi {
     public static String XLS_DIR = WORK_DIR + "xls" + SEP;
     public static String FIX_BAT = "fix.bat";
 
-    public static void main(String[] args) {
-//        loadData();
+    public static void main(String[] args) throws IOException, InterruptedException {
+        loadData();
 
         XMLtoDoc.loadXmls(data -> XLSWriter.write(data, XLS_DIR + SEP + data.year + "_" + data.month + ".xlsx"));
+
+
     }
 
-    static void loadData() throws IOException, InterruptedException {
-        FileOperations.rmrf();
-        DateRange dateRange = new DateRange(2017, 12);
+    static void loadData() throws IOException {
+        FileOperations.run("rm -rf " + WORK_DIR);
+        createIfNeeded(WORK_DIR);
+        createIfNeeded(ARCHIVES_DIR);
 
-        DownloadArchives.download(dateRange);
+        DateRange dateRange = new DateRange(2018, 7);
+        (new DownloadFromIUB()).download(ARCHIVES_DIR, dateRange);
         recreateDirectories();
-        UnpacArchivesToXml.extract();
-        XMLtoDoc.fixXmlFiles();
+
+        visitEachSubSubDirectory2(ARCHIVES_DIR)
+            .forEach(dir -> {
+                String year = dir.year;
+                String month = dir.month;
+                File archiveDir = new File(ARCHIVES_DIR + SEP + year + SEP + month);
+                File xmlDir = new File(XML_DIR + SEP + year + SEP + month);
+
+                for(File achiveFile : archiveDir.listFiles()) {
+                    UnpacArchivesToXml.extractFile(achiveFile, xmlDir);
+                }
+
+                run(FIX_BAT +  " "+ xmlDir);
+
+                Data data = new Data(year, month);
+                for (File xmlFile : xmlDir.listFiles()) {
+                    Document doc = XMLtoDoc.readXml(xmlFile);
+                    if(doc == null) {
+                        continue;
+                    }
+                    (new DocToData(doc, data)).visitFiles();
+                }
+                data.build();
+
+                XLSWriter.write(data, XLS_DIR + SEP + data.year + "_" + data.month + ".xlsx");
+            });
     }
 
     static void recreateDirectories() throws IOException {

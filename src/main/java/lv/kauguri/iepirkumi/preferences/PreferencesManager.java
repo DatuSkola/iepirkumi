@@ -48,7 +48,12 @@ public class PreferencesManager {
             Regex regex = new Regex("\"([^\"]*)\"");
             ReadCSV.read(CPV_CODES, line -> {
                 List<String> str = regex.get(line);
-                cpvCodes.put(str.get(0), new CpvCode(str.get(0), str.get(1), str.get(2), str.get(3)));
+                cpvCodes.put(str.get(0),
+                        new CpvCode(
+                                str.get(0),
+                                str.get(1),
+                                str.get(2),
+                                str.size() >= 4 ? str.get(3) : null));
                 return null;
             });
         }

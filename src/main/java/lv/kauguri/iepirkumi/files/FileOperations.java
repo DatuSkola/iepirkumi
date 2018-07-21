@@ -6,17 +6,14 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
 
 import static lv.kauguri.iepirkumi.Iepirkumi.SEP;
 import static lv.kauguri.iepirkumi.Iepirkumi.WORK_DIR;
 
 public class FileOperations {
-
-    public static void rmrf() throws IOException, InterruptedException {
-        Runtime rt = Runtime.getRuntime();
-        Process pr = rt.exec("rm -rf " + WORK_DIR);
-        pr.waitFor();
-    }
 
     public static void createIfNeeded(String dirPath) throws IOException {
         createIfNeeded(new File(dirPath));
@@ -80,6 +77,17 @@ public class FileOperations {
                 }
             }
         }
+    }
+
+    public static Stream<Dir> visitEachSubSubDirectory2(String dir) {
+        List<Dir> dirList = new ArrayList<>();
+        File xmlDir = new File(dir);
+        for(File yearDir : xmlDir.listFiles()) {
+            for (File monthDir : yearDir.listFiles()) {
+                dirList.add(new Dir(yearDir.getName(), monthDir.getName()));
+            }
+        }
+        return dirList.stream();
     }
 
     public static String getDir(String dir, String year, String month) {
