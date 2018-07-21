@@ -25,8 +25,6 @@ public class Iepirkumi {
         loadData();
 
         XMLtoDoc.loadXmls(data -> XLSWriter.write(data, XLS_DIR + SEP + data.year + "_" + data.month + ".xlsx"));
-
-
     }
 
     static void loadData() throws IOException {
