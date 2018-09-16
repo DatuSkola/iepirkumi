@@ -2,14 +2,16 @@ package lv.kauguri.iepirkumi;
 
 import lv.kauguri.iepirkumi.data.Data;
 import lv.kauguri.iepirkumi.data.DateRange;
+import lv.kauguri.iepirkumi.files.Dir;
 import lv.kauguri.iepirkumi.files.FileOperations;
+import lv.kauguri.iepirkumi.reactive.ChainedExecutor;
 import org.w3c.dom.Document;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import static lv.kauguri.iepirkumi.files.FileOperations.*;
-import static lv.kauguri.iepirkumi.files.FileOperations.getDir;
 
 public class Iepirkumi {
 
@@ -21,46 +23,96 @@ public class Iepirkumi {
     public static String XLS_DIR = WORK_DIR + "xls" + SEP;
     public static String FIX_BAT = "fix.bat";
 
-    public static void main(String[] args) throws IOException, InterruptedException {
-        loadData();
+    public static boolean NEED_TO_DOWNLOAD = true;
 
-        XMLtoDoc.loadXmls(data -> XLSWriter.write(data, XLS_DIR + SEP + data.year + "_" + data.month + ".xlsx"));
+    static ChainedExecutor chainedExecutor = new ChainedExecutor();
+
+    public static void main(String[] args) {
+//        chainedExecutor.start(Iepirkumi::download);
+        chainedExecutor.start(Iepirkumi::recreateXLS);
+        chainedExecutor.waitToFinish();
     }
 
-    static void loadData() throws IOException {
+    static void recreateXLS() {
+        FileOperations.run("rm -rf " + XLS_DIR);
+        try {
+            createIfNeeded(XLS_DIR);
+            List<Dir> list = visitEachSubSubDirectory2(XML_DIR);
+            for (Dir dir : list) {
+                chainedExecutor.returns(dir, Iepirkumi::buildXLS);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    static void download(Object o) {
         FileOperations.run("rm -rf " + WORK_DIR);
-        createIfNeeded(WORK_DIR);
-        createIfNeeded(ARCHIVES_DIR);
+        try {
+            createIfNeeded(WORK_DIR);
+            createIfNeeded(ARCHIVES_DIR);
 
-        DateRange dateRange = new DateRange(2018, 7);
-        (new DownloadFromIUB()).download(ARCHIVES_DIR, dateRange);
-        recreateDirectories();
+            DateRange dateRange = new DateRange(2018, 7);
+            (new DownloadFromIUB()).download(ARCHIVES_DIR, dateRange);
+            recreateDirectories();
 
-        visitEachSubSubDirectory2(ARCHIVES_DIR)
-            .forEach(dir -> {
-                String year = dir.year;
-                String month = dir.month;
-                File archiveDir = new File(ARCHIVES_DIR + SEP + year + SEP + month);
-                File xmlDir = new File(XML_DIR + SEP + year + SEP + month);
+            List<Dir> list = visitEachSubSubDirectory2(ARCHIVES_DIR);
+            for (Dir dir : list) {
+                chainedExecutor.returns(dir, Iepirkumi::unarchive);
+            }
 
-                for(File achiveFile : archiveDir.listFiles()) {
-                    UnpacArchivesToXml.extractFile(achiveFile, xmlDir);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    static void unarchive(Dir dir) {
+        String year = dir.year;
+        String month = dir.month;
+        File archiveDir = new File(ARCHIVES_DIR + SEP + year + SEP + month);
+        File xmlDir = new File(XML_DIR + SEP + dir.year + SEP + dir.month);
+
+        for (File archiveFile : archiveDir.listFiles()) {
+            UnpacArchivesToXml.extractFile(archiveFile, xmlDir);
+        }
+        run(FIX_BAT + " " + xmlDir);
+        chainedExecutor.returns(dir, Iepirkumi::buildXLS);
+    }
+
+    static void buildXLS(Dir dir) {
+        try {
+            File xmlDir = new File(XML_DIR + SEP + dir.year + SEP + dir.month);
+            Data data = new Data(dir.year, dir.month);
+            for (File xmlFile : xmlDir.listFiles()) {
+                createIfNeeded(XLS_DIR + SEP + dir.year);
+                Document doc = XMLtoDoc.readXml(xmlFile);
+                if (doc == null) {
+                    continue;
                 }
+                (new DocToData(doc, data)).visitFiles();
+            }
+            data.build();
 
-                run(FIX_BAT +  " "+ xmlDir);
+            chainedExecutor.returns(data, Iepirkumi::writeXLS);
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+    }
 
-                Data data = new Data(year, month);
-                for (File xmlFile : xmlDir.listFiles()) {
-                    Document doc = XMLtoDoc.readXml(xmlFile);
-                    if(doc == null) {
-                        continue;
-                    }
-                    (new DocToData(doc, data)).visitFiles();
-                }
-                data.build();
+    static void writeXLS(Data data) {
+        XLSWriter.write(data, XLS_DIR + data.year + SEP + data.month + ".xlsx");
+    }
 
-                XLSWriter.write(data, XLS_DIR + SEP + data.year + "_" + data.month + ".xlsx");
-            });
+
+    static class Files {
+        Dir dir;
+        File archiveFile;
+
+        public Files(Dir dir, File archiveFile) {
+            this.dir = dir;
+            this.archiveFile = archiveFile;
+        }
     }
 
     static void recreateDirectories() throws IOException {
@@ -70,11 +122,11 @@ public class Iepirkumi {
         createIfNeeded(TMP_DIR);
         createIfNeeded(XLS_DIR);
 
-        for(File yearDir : dir.listFiles()) {
+        for (File yearDir : dir.listFiles()) {
             createIfNeeded(XML_DIR + SEP + yearDir.getName());
             createIfNeeded(XLS_DIR + SEP + yearDir.getName());
 
-            for(File monthDir : yearDir.listFiles()) {
+            for (File monthDir : yearDir.listFiles()) {
                 File xmlMonthDir = new File(XML_DIR + SEP + yearDir.getName() + SEP + monthDir.getName());
                 File xlsMonthDir = new File(XLS_DIR + SEP + yearDir.getName() + SEP + monthDir.getName());
                 createIfNeeded(xmlMonthDir);

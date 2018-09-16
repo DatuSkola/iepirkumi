@@ -1,5 +1,6 @@
 package lv.kauguri.iepirkumi;
 
+import lv.kauguri.iepirkumi.data.Column;
 import lv.kauguri.iepirkumi.data.Data;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -11,6 +12,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import static lv.kauguri.iepirkumi.files.FileOperations.getDir;

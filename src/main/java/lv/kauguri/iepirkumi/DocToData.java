@@ -26,19 +26,41 @@ public class DocToData {
 
     void visitFiles() {
         NodeList nodeList = sourceDocument.getChildNodes().item(0).getChildNodes();
+
         for (int i = 0; i < nodeList.getLength(); i++) {
             Node node = nodeList.item(i);
-            visitNode(node, "");
+            visitNode(values, node, "");
         }
 
         resultData.addRow(values);
         resultData.addWinners(winners);
     }
 
-    private void visitNode(Node node, String parentName) {
+    private void visitNode(Map<Column, String> map2, Node node, String parentName) {
         String nodeName = node.getNodeName();
 
+        if(nodeName.contains("winner_name")) {
+            StringBuilder sb = new StringBuilder();
+            printNode(sb, node, " ");
+        }
+
         if(nodeName.equals("winner_list")) {
+            for(int i = 0; i < node.getChildNodes().getLength(); i++) {
+                Map<Column, String> map = new HashMap<>();
+                Node winnerNode = node.getChildNodes().item(i);
+                visitChildren(map, winnerNode, parentName, "winner" );
+
+                String winnerName = parentName;
+                if(!winnerName.isEmpty()) {
+                    winnerName += ".";
+                }
+                winnerName += "winner.winner_name";
+
+                if(map.get(new Column(winnerName)) != null) {
+                    String value = map.get(new Column(winnerName));
+                    map2.put(Column.createColumn("winner_name", "winner_name"), value);
+                }
+            }
             processWinnerList(node);
             return;
         }
@@ -47,18 +69,14 @@ public class DocToData {
             return;
         }
 
-        if(nodeName.endsWith("list")) {
-            String value = toString(node).trim();
+        visitChildren(map2, node, parentName, nodeName);
+    }
 
-            if(parentName != null && !parentName.isEmpty()) {
-                parentName += ".";
-            }
-
-            values.put(Column.createColumn(parentName + nodeName, nodeName), value);
-            return;
-        }
-
-        visitChildren(node, parentName, nodeName);
+    private void printNode(StringBuilder stringBuilder, Node rootNode, String spacer) {
+        stringBuilder.append(spacer + rootNode.getNodeName() + " -> " + rootNode.getNodeValue());
+        NodeList nl = rootNode.getChildNodes();
+        for (int i = 0; i < nl.getLength(); i++)
+            printNode(stringBuilder, nl.item(i), spacer + "   ");
     }
 
     private String toString(Node node) {
@@ -75,7 +93,7 @@ public class DocToData {
         }
     }
 
-    private void visitChildren(Node node, String parentName, String nodeName) {
+    private void visitChildren(Map<Column, String> map, Node node, String parentName, String nodeName) {
         NodeList childNodes = node.getChildNodes();
 
         if (parentName != null && parentName.length() > 0) {
@@ -88,10 +106,10 @@ public class DocToData {
             for (int i = 0; i < childNodes.getLength(); i++) {
                 Node childNode = childNodes.item(i);
                 String name = parentName + nodeName;
-                visitNode(childNode, name);
+                visitNode(map, childNode, name);
             }
         } else {
-            values.put(Column.createColumn(parentName + nodeName, nodeName), node.getTextContent());
+            map.put(Column.createColumn(parentName + nodeName, nodeName), node.getTextContent());
         }
     }
 

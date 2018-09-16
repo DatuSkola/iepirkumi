@@ -79,7 +79,7 @@ public class FileOperations {
         }
     }
 
-    public static Stream<Dir> visitEachSubSubDirectory2(String dir) {
+    public static List<Dir> visitEachSubSubDirectory2(String dir) {
         List<Dir> dirList = new ArrayList<>();
         File xmlDir = new File(dir);
         for(File yearDir : xmlDir.listFiles()) {
@@ -87,7 +87,7 @@ public class FileOperations {
                 dirList.add(new Dir(yearDir.getName(), monthDir.getName()));
             }
         }
-        return dirList.stream();
+        return dirList;
     }
 
     public static String getDir(String dir, String year, String month) {
@@ -101,7 +101,7 @@ public class FileOperations {
             InputStream is = process.getInputStream();
             int i = 0;
             while( (i = is.read() ) != -1) {
-                System.out.print((char)i);
+//                System.out.print((char)i);
             }
             process.waitFor();
         } catch (InterruptedException | IOException e) {

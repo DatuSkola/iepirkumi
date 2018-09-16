@@ -37,6 +37,7 @@ class XLSWriter {
             new Column("authority_name"),
             new Column("authority_reg_num"),
 
+            new Column("winner_name"),
             new Column("exported_winner_id"),
             new Column("winners.winner.firm"),
             new Column("winners.winner.reg_num"),
@@ -48,10 +49,11 @@ class XLSWriter {
         XSSFWorkbook workbook = new XSSFWorkbook();
 
         writeMainSheet(data, workbook);
-        writeFullDataSheet(data, workbook);
-        writeWinnersSheet(data, workbook);
+//        writeFullDataSheet(data, workbook);
+//        writeWinnersSheet(data, workbook);
 
         try {
+            System.out.println(xlsFile);
             FileOutputStream outputStream = new FileOutputStream(xlsFile);
             workbook.write(outputStream);
             workbook.close();
@@ -216,9 +218,9 @@ class XLSWriter {
                 XSSFCell cell = row.createCell(colNum++);
                 String value = getValue(dataRow, dataColumn);
 
-                if(value != null && value.length() > 200) {
-                    System.out.println(">>>"+dataColumn.fullName);
-                }
+//                if(value != null && value.length() > 200) {
+//                    System.out.println(">>>"+dataColumn.fullName);
+//                }
 
                 cell.setCellValue(value);
                 if(value != null && value.length() > 30 && !dataColumn.fullName.endsWith("list")) {

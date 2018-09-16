@@ -8,4 +8,9 @@ public class Dir {
         this.year = year;
         this.month = month;
     }
+
+    @Override
+    public String toString() {
+        return "a_" + year +"_"+ month;
+    }
 }

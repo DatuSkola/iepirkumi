@@ -46,6 +46,8 @@ public class Data {
         this.columns = columnArray;
     }
 
-
-
+    @Override
+    public String toString() {
+        return "b_"+year+"_"+month;
+    }
 }

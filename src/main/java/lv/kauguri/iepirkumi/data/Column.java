@@ -18,7 +18,7 @@ public class Column {
         return column;
     }
 
-    private Column(String fullName, String shortName) {
+    public Column(String fullName, String shortName) {
         this.fullName = fullName;
         this.shortName = shortName;
     }
@@ -47,5 +47,10 @@ public class Column {
     @Override
     public int hashCode() {
         return fullName != null ? fullName.hashCode() : 0;
+    }
+
+    @Override
+    public String toString() {
+        return fullName;
     }
 }
