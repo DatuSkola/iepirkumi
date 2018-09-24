@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 import static lv.kauguri.iepirkumi.Iepirkumi.SEP;
@@ -66,12 +67,12 @@ public class FileOperations {
         }
     }
 
-    public static void visitEachSubSubDirectory(String dir, MyConsumer<String, String> myConsumer) {
+    public static void visitEachSubSubDirectory(String dir, BiConsumer<String, String> consumer) {
         File xmlDir = new File(dir);
         for(File yearDir : xmlDir.listFiles()) {
             for (File monthDir : yearDir.listFiles()) {
                 try {
-                    myConsumer.accept(yearDir.getName(), monthDir.getName());
+                    consumer.accept(yearDir.getName(), monthDir.getName());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

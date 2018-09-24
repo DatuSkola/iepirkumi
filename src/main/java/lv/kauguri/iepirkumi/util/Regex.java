@@ -1,4 +1,4 @@
-package lv.kauguri.iepirkumi;
+package lv.kauguri.iepirkumi.util;
 
 import java.util.ArrayList;
 import java.util.List;

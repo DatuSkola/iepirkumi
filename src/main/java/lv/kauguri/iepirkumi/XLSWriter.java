@@ -4,6 +4,7 @@ import lv.kauguri.iepirkumi.data.Column;
 import lv.kauguri.iepirkumi.data.Data;
 import lv.kauguri.iepirkumi.data.Winner;
 import lv.kauguri.iepirkumi.preferences.PreferencesManager;
+import lv.kauguri.iepirkumi.xls.Utils;
 import org.apache.poi.common.usermodel.HyperlinkType;
 import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.hssf.util.HSSFColor;
@@ -24,7 +25,8 @@ import static lv.kauguri.iepirkumi.data.Const.WINNERS_ID;
 
 class XLSWriter {
 
-    static List<Column> mainSheetColumns = Arrays.asList(
+    static private
+    List<Column> mainSheetColumns = Arrays.asList(
             new Column("id"),
             new Column("general.procurement_code"),
             new Column("general.name"),
@@ -93,6 +95,10 @@ class XLSWriter {
         }
 
         for (Map<Column, String> dataRow : data.rows) {
+            if(!Filter.keep(dataRow)) {
+                continue;
+            }
+
             row = sheet.createRow(rowNum++);
 
             colNum = 0;
@@ -100,11 +106,11 @@ class XLSWriter {
                 XSSFCell cell = row.createCell(colNum++);
 
                 if(column.fullName.equals("%url")) {
-                    String value = getValue(dataRow, column);
-                    url(cell, createHelper, hlink_style, value);
+                    String value = Utils.getValue(dataRow, column);
+                    Utils.url(cell, createHelper, hlink_style, value);
                 }
 
-                String value = getValue(dataRow, column);
+                String value = Utils.getValue(dataRow, column);
                 cell.setCellValue(value);
             }
         }
@@ -166,7 +172,7 @@ class XLSWriter {
 
         for (Column dataColumn : data.columns) {
             int col = colNum++;
-            String currentCategory = getColumnCategory(dataColumn);
+            String currentCategory = Utils.getColumnCategory(dataColumn);
 
             XSSFCell currentCell = columnRowCotegory.createCell(col);
 
@@ -210,13 +216,13 @@ class XLSWriter {
             XSSFRow row = sheet.createRow(rowNum++);
 
             idCell = row.createCell(0);
-            String idValue = getValue(dataRow, new Column("id"));
+            String idValue = Utils.getValue(dataRow, new Column("id"));
             idCell.setCellValue(idValue);
 
             colNum = 1;
             for (Column dataColumn : data.columns) {
                 XSSFCell cell = row.createCell(colNum++);
-                String value = getValue(dataRow, dataColumn);
+                String value = Utils.getValue(dataRow, dataColumn);
 
 //                if(value != null && value.length() > 200) {
 //                    System.out.println(">>>"+dataColumn.fullName);
@@ -231,122 +237,4 @@ class XLSWriter {
         }
     }
 
-    private static void url(XSSFCell cell, XSSFCreationHelper createHelper, XSSFCellStyle hlink_style,
-                                String url) {
-        cell.setCellValue(url);
-        XSSFHyperlink link = createHelper.createHyperlink(HyperlinkType.URL);
-        link.setAddress(url);
-        cell.setHyperlink(link);
-        cell.setCellStyle(hlink_style);
-    }
-
-    private static String getColumnCategory(Column column) {
-        if (column.fullName == null || !column.fullName.contains(".")) {
-            return null;
-        } else {
-            return column.fullName.split("\\.")[0];
-        }
-    }
-
-    private static String getValue(Map<Column, String> dataRow, Column column) {
-        String value;
-        if(column.fullName.equals("%url")) {
-            String idValue = dataRow.get(new Column("id"));
-            value = "https://pvs.iub.gov.lv/show/" + idValue;
-
-            return value;
-        }
-
-        value = dataRow.get(column);
-        try {
-            value = prepareValue(value);
-            value = getClassifierValue(column.fullName, value);
-            return value;
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    private static String getClassifierValue(String name, String value) {
-        if (value != null && value.length() > 0) {
-            if (name.endsWith("country")) {
-                String classifierVaule = PreferencesManager.getCountries().getProperty(value);
-                return classifierVaule;
-            } else if (name.endsWith("currency")) {
-                String classifierVaule = PreferencesManager.getCurrencies().getProperty(value);
-                return classifierVaule;
-            } else if (name.endsWith("language")) {
-                String classifierVaule = PreferencesManager.getLanguages().getProperty(value);
-                return classifierVaule;
-            } else if (name.equals("type")) {
-                String classifierVaule = PreferencesManager.getTypes().getProperty(value);
-                return classifierVaule.split(";")[2];
-            } else if (name.endsWith(".code")) {
-                String classifierVaule = PreferencesManager.getCPVCodes().get(value).lv;
-                return classifierVaule;
-            }
-        }
-        return value;
-    }
-
-    private static void writeWinnersSheet(Data data, XSSFWorkbook workbook) {
-        XSSFSheet sheetWinners = workbook.createSheet("Winners");
-        sheetWinners.createFreezePane(0, 2);
-        Set<String> columns = new HashSet<>();
-        for (Winner winner : data.winners) {
-            columns.addAll(winner.attributes.keySet());
-        }
-
-        String[] columnsArray = columns.toArray(new String[]{});
-
-        int rowNum = 0;
-        XSSFRow row = sheetWinners.createRow(rowNum++);
-
-        int colNum = 0;
-        XSSFCell cell = row.createCell(colNum++);
-        cell.setCellValue(WINNERS_ID);
-
-        for (String dataColumn : columnsArray) {
-            cell = row.createCell(colNum++);
-            cell.setCellValue(dataColumn);
-        }
-
-        for (Winner winner : data.winners) {
-            row = sheetWinners.createRow(rowNum++);
-            colNum = 0;
-            cell = row.createCell(colNum++);
-            cell.setCellValue(winner.id);
-
-            for (String column : columnsArray) {
-                cell = row.createCell(colNum++);
-                String value = winner.attributes.get(column);
-                value = prepareValue(value);
-                cell.setCellValue(value);
-            }
-
-        }
-    }
-
-    private static String prepareValue(String value) {
-        if (value == null) {
-            return null;
-        }
-        int max = SpreadsheetVersion.EXCEL2007.getMaxTextLength();
-        if (value.length() > max) {
-            value = value.substring(0, max);
-        }
-        if (value.contains("&")) {
-            value = value.replace("&amp;", "&");
-            value = value.replace("&quot;", "\"");
-            value = value.replace("&apos;", "\'");
-            value = value.replace("&ndash;", "–");
-            value = value.replace("&hellip;", "…");
-            value = value.replace("&bull;", "•");
-            value = value.replace("&lt;", "<");
-            value = value.replace("&gt;", ">");
-            value = value.replace("&ldquo;", "“");
-        }
-        return value;
-    }
 }

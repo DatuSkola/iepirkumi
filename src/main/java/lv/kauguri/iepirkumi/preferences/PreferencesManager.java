@@ -1,7 +1,7 @@
 package lv.kauguri.iepirkumi.preferences;
 
 import lv.kauguri.iepirkumi.files.ReadCSV;
-import lv.kauguri.iepirkumi.Regex;
+import lv.kauguri.iepirkumi.util.Regex;
 
 import java.io.*;
 import java.nio.charset.Charset;

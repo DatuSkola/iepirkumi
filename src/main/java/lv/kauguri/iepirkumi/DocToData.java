@@ -33,7 +33,7 @@ public class DocToData {
         }
 
         resultData.addRow(values);
-        resultData.addWinners(winners);
+//        resultData.addWinners(winners);
     }
 
     private void visitNode(Map<Column, String> map2, Node node, String parentName) {
